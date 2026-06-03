@@ -1,0 +1,55 @@
+# Build artifacts
+motor/build/
+backend/__pycache__/
+backend/.pytest_cache/
+backend/app/__pycache__/
+backend/tests/__pycache__/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Compiled binaries
+*.o
+*.a
+*.so
+mancala_server
+mancala_bench
+test_board
+test_alphabeta
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CTestTestfile.cmake
+_deps/
+
+# Node / frontend
+node_modules/
+dist/
+.next/
+
+# Python virtual envs
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Profiling output
+perf.data
+perf.data.old
+callgrind.out.*
+gmon.out
