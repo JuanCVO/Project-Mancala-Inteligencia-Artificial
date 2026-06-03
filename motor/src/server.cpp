@@ -179,21 +179,48 @@ int main() {
         if (client < 0) continue;
 
         std::string request;
-        char buf[4096];
-        while (true) {
-            ssize_t n = recv(client, buf, sizeof(buf), 0);
-            if (n <= 0) break;
-            request.append(buf, n);
-            // Stop once we have the full body (Content-Length bytes after \r\n\r\n)
-            auto hdr_end = request.find("\r\n\r\n");
-            if (hdr_end == std::string::npos) continue;
-            // Parse Content-Length
-            auto cl_pos = request.find("Content-Length:");
-            if (cl_pos == std::string::npos) break; // no body expected
-            long cl = std::stol(request.c_str() + cl_pos + 15);
-            if ((long)(request.size() - hdr_end - 4) >= cl) break;
+        {
+            char buf[4096];
+            while (true) {
+                ssize_t n = recv(client, buf, sizeof(buf), 0);
+                if (n <= 0) break;
+                request.append(buf, n);
+                auto hdr_end = request.find("\r\n\r\n");
+                if (hdr_end == std::string::npos) continue;
+                auto cl_pos = request.find("Content-Length:");
+                if (cl_pos != std::string::npos) {
+                    long cl = 0;
+                    try { cl = std::stol(request.c_str() + cl_pos + 15); } catch (...) { break; }
+                    if ((long)(request.size() - hdr_end - 4) >= cl) break;
+                    continue;
+                }
+                break;
+            }
         }
         if (request.empty()) { close(client); continue; }
+
+        // Decode chunked body if needed
+        {
+            auto hdr_end = request.find("\r\n\r\n");
+            if (hdr_end != std::string::npos &&
+                request.find("Transfer-Encoding: chunked") != std::string::npos) {
+                std::string raw = request.substr(hdr_end + 4);
+                std::string decoded;
+                size_t pos = 0;
+                while (pos < raw.size()) {
+                    auto crlf = raw.find("\r\n", pos);
+                    if (crlf == std::string::npos) break;
+                    long csz = 0;
+                    try { csz = std::stol(raw.substr(pos, crlf - pos), nullptr, 16); } catch (...) { break; }
+                    if (csz == 0) break;
+                    pos = crlf + 2;
+                    if (pos + csz > raw.size()) break;
+                    decoded += raw.substr(pos, csz);
+                    pos += csz + 2;
+                }
+                request = request.substr(0, hdr_end + 4) + decoded;
+            }
+        }
         std::string response;
 
         if (request.find("POST /move") != std::string::npos) {
