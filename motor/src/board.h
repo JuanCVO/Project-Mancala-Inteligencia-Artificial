@@ -54,10 +54,10 @@ inline int opposite_pit(int i) {
     if (i >= PITS + 1 && i < STORE_1) return STORE_1 - 1 - i; // 7->6? no — symmetric
     return -1;
 }
-// Correct formula: pit p of player0 is index p (0-5), opposite is (STORE_1-1-p) = 12-p
-// pit p of player1 is index p+PITS+1 (7-12), opposite is (PITS - (p - (PITS+1))) = hmm
-// Simpler: for index i, opposite = STORE_0 + STORE_1 - 1 - i = 19 - i
-inline int opposite(int i) { return STORE_0 + STORE_1 - 1 - i; }  // 19 - i
+// Correct formula: for any pit index i, the mirror pit across the board is STORE_1-1-i = 12-i.
+//   Player 0 pits (0-5):  opposite(0)=12, opposite(1)=11, ..., opposite(5)=7  ✓
+//   Player 1 pits (7-12): opposite(7)=5,  opposite(8)=4,  ..., opposite(12)=0 ✓
+inline int opposite(int i) { return STORE_1 - 1 - i; }  // 12 - i
 
 // Returns legal moves (pit indices) for `side`. A move is legal if the pit
 // belongs to `side` and has at least one seed.

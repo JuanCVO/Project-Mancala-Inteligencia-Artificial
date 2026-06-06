@@ -20,6 +20,7 @@ find_package(OpenMP REQUIRED)
 add_executable(mancala_server
     src/server.cpp
     src/alphabeta.cpp
+    src/mcts.cpp
 )
 target_include_directories(mancala_server PRIVATE src)
 target_link_libraries(mancala_server PRIVATE OpenMP::OpenMP_CXX)
@@ -30,6 +31,7 @@ target_link_libraries(mancala_server PRIVATE OpenMP::OpenMP_CXX)
 add_executable(mancala_bench
     bench/mancala_bench.cpp
     src/alphabeta.cpp
+    src/mcts.cpp
 )
 target_include_directories(mancala_bench PRIVATE src bench)
 target_link_libraries(mancala_bench PRIVATE OpenMP::OpenMP_CXX)
@@ -43,7 +45,7 @@ add_executable(test_board
     tests/test_board.cpp
 )
 target_include_directories(test_board PRIVATE src)
-# test_board.cpp only includes board.h (header-only logic), no alphabeta.cpp needed
+# test_board.cpp only includes board.h (header-only), no alphabeta/mcts needed
 
 add_executable(test_alphabeta
     tests/test_alphabeta.cpp
@@ -52,5 +54,14 @@ add_executable(test_alphabeta
 target_include_directories(test_alphabeta PRIVATE src)
 target_link_libraries(test_alphabeta PRIVATE OpenMP::OpenMP_CXX)
 
+add_executable(test_mcts
+    tests/test_mcts.cpp
+    src/mcts.cpp
+    src/alphabeta.cpp
+)
+target_include_directories(test_mcts PRIVATE src)
+target_link_libraries(test_mcts PRIVATE OpenMP::OpenMP_CXX)
+
 add_test(NAME BoardTests     COMMAND test_board)
 add_test(NAME AlphaBetaTests COMMAND test_alphabeta)
+add_test(NAME MCTSTests      COMMAND test_mcts)

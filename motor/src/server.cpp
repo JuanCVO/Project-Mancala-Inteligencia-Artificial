@@ -14,6 +14,7 @@
 
 #include "board.h"
 #include "alphabeta.h"
+#include "mcts.h"
 
 #include <omp.h>
 #include <cstring>
@@ -110,13 +111,19 @@ static std::string handle_move(const std::string& body) {
         stats_json = buf;
 
     } else {
-        // MCTS stub — will be filled in by Andres Felipe's implementation.
-        // Returns a random legal move so the server stays functional.
-        auto moves = legal_moves(b, side);
-        best_move  = moves.empty() ? -1 : moves[0];
-        eval_out   = 0.5;
+        int simulations = json_int(body, "simulations", 10000);
+        MCTSResult r   = mcts_search(b, side, simulations, threads);
+        best_move      = r.move;
+        eval_out       = r.win_rate;
+
         g_mcts_calls++;
-        stats_json = "\"algo\":\"mcts\",\"rollouts\":0,\"tree_depth_avg\":0,\"win_rate\":0.5";
+        g_mcts_rollouts += r.rollouts;
+
+        char buf[256];
+        std::snprintf(buf, sizeof(buf),
+            "\"algo\":\"mcts\",\"rollouts\":%lld,\"tree_depth_avg\":%.2f,\"win_rate\":%.4f",
+            r.rollouts, r.tree_depth_avg, r.win_rate);
+        stats_json = buf;
     }
 
     auto t1 = std::chrono::steady_clock::now();

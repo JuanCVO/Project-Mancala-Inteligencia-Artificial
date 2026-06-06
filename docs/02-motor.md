@@ -154,34 +154,101 @@ Los tests verifican explícitamente:
 
 ## 3. Motor MCTS (Andres Felipe)
 
-> Esta sección es completada por Andres Felipe. Ver [03-paralelizacion.md](03-paralelizacion.md) para la comparativa entre ambos motores.
+Implementación: [motor/src/mcts.cpp](../motor/src/mcts.cpp)  
+Interfaz pública: [motor/src/mcts.h](../motor/src/mcts.h)
 
-### 3.1 Pseudocódigo UCT
+### 3.1 Pseudocódigo UCT — las 4 fases canónicas
 
 ```
-función mcts(tablero, side, simulations) → move
-    raíz ← nuevo_nodo(tablero, side)
+función mcts_search(tablero, side, simulations, threads) → MCTSResult
+    raíz ← nuevo_nodo(tablero, side, mover=-1)
 
-    repetir simulations veces:
-        nodo ← selección_UCT(raíz)
-        nodo ← expansión(nodo)
-        resultado ← simulación_aleatoria(nodo)
-        retropropagación(nodo, resultado)
+    para iter = 1 … simulations/threads:
 
-    devolver hijo_más_visitado(raíz).move
+        ── FASE 1: Selección ─────────────────────────────────────────────
+        nodo ← raíz
+        mientras ¬es_terminal(nodo.tablero) ∧ nodo.no_intentados = ∅:
+            nodo ← hijo_con_max_UCT(nodo)
 
-función UCT(nodo) → valor
-    devolver wₙ/Nₙ + c · √(ln(N_padre) / Nₙ)    con c = √2
+        ── FASE 2: Expansión ─────────────────────────────────────────────
+        si nodo.no_intentados ≠ ∅:
+            mov ← elegir_al_azar(nodo.no_intentados)
+            hoja ← nuevo_hijo(nodo, mov)
+        sino:
+            hoja ← nodo   // nodo terminal: simular desde aquí
+
+        ── FASE 3: Simulación (rollout, paralelizada con OpenMP) ─────────
+        total_wins ← 0
+        en paralelo para r = 0 … threads-1:
+            total_wins += rollout_aleatorio(hoja.tablero, hoja.side)
+
+        ── FASE 4: Retropropagación ──────────────────────────────────────
+        para cada nodo en camino desde hoja hasta raíz:
+            nodo.N += threads
+            si nodo.mover == side:
+                nodo.w += total_wins
+            sino:
+                nodo.w += (threads − total_wins)   // wins para el mover
+
+    devolver hijo_más_visitado(raíz).move_made
+
+función UCT(nodo_hijo) → valor
+    si nodo_hijo.N = 0: devolver +∞   // explorar siempre nodos no visitados
+    devolver wₙ/Nₙ + c · √(ln(N_padre) / Nₙ)    con c = √2 ≈ 1.4142
 ```
 
-### 3.2 Criterio de corrección de MCTS
+#### Convención de `w` (wins) y backpropagation
 
-A diferencia de Alfa-Beta, MCTS no garantiza el movimiento óptimo. Su corrección es estadística: para presupuestos crecientes de simulaciones, la tasa de coincidencia con el movimiento óptimo de Alfa-Beta debe converger hacia 1.
+Cada nodo guarda `mover` = el jugador que hizo el movimiento que llevó a ese nodo. `w` acumula victorias para `mover`. En la retropropagación:
 
-| Simulaciones | Tasa de coincidencia esperada |
-|-------------|-------------------------------|
-| 1 000       | ~60 % |
-| 10 000      | ~80 % |
-| 100 000     | ~92 % |
+- Si `cur->mover == root_side` → `cur->w += total_wins` (el jugador raíz ganó esas simulaciones).
+- Si no → `cur->w += (visits − total_wins)` (el oponente de la raíz quiere que ésta pierda).
 
-*(Valores exactos se reportan en [03-paralelizacion.md](03-paralelizacion.md) tras correr el benchmark.)*
+Esto garantiza que `w/N` mide la tasa de éxito del jugador que eligió ese nodo, haciendo la fórmula UCT coherente: un padre siempre maximiza `w/N` de sus hijos.
+
+#### Selección del movimiento final
+
+Se retorna `child->move_made` del hijo con mayor `N` (más visitado), no el de mayor `w/N`. Esto es más robusto estadísticamente porque refleja consenso a lo largo de toda la búsqueda.
+
+### 3.2 Criterio de corrección estadística de MCTS
+
+MCTS no garantiza el movimiento óptimo. Su corrección es **estadística**: la tasa de coincidencia con el movimiento elegido por Alfa-Beta a profundidad fija debe crecer con el presupuesto de simulaciones.
+
+**Medición:** para cada posición en `tests/suite.txt`, se ejecuta `mcts_search` y `alphabeta_par` (depth=8) y se comprueba si ambos eligen el mismo movimiento.
+
+```bash
+# Medir coincidencia para 3 presupuestos:
+for SIMS in 1000 10000 100000; do
+  OMP_NUM_THREADS=1 ./build/mancala_bench \
+    --algo mcts --simulations $SIMS \
+    --compare-depth 8 \
+    --positions tests/suite.txt
+done
+```
+
+| Simulaciones | Tasa de coincidencia (10 posiciones) |
+|-------------|---------------------------------------|
+| 1 000       | reportada en [03-paralelizacion.md](03-paralelizacion.md) §7 |
+| 10 000      | reportada en [03-paralelizacion.md](03-paralelizacion.md) §7 |
+| 100 000     | reportada en [03-paralelizacion.md](03-paralelizacion.md) §7 |
+
+Se espera que la tasa converja hacia 90–95 % para 100 000 simulaciones en Kalah(6,4), dado que el espacio de juego no es excesivamente grande.
+
+### 3.3 Corrección implementacional
+
+```bash
+cd motor
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+cd build && ctest -R MCTSTests --output-on-failure
+```
+
+Los 10 tests de `test_mcts.cpp` verifican:
+1. Devuelve movimiento legal en tablero inicial (jugador 0 y jugador 1).
+2. Devuelve `-1` en tablero terminal.
+3. El número de rollouts iguala exactamente al parámetro `simulations`.
+4. Mayor presupuesto produce profundidad de árbol igual o mayor.
+5. Movimiento único forzado (un solo hoyo con semillas) es elegido correctamente.
+6. Paralelización con 2 y 4 hilos produce movimiento legal y cuenta exacta de rollouts.
+7. El tablero de entrada no es mutado por `mcts_search`.
+8. Posición cerca del final del juego produce movimiento legal.
