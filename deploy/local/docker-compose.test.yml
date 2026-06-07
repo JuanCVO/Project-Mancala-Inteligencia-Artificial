@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+
+  motor:
+    image: hashicorp/http-echo
+    container_name: mancala-motor-test
+    command: ["-text=motor-ok", "-listen=:9090"]
+    networks:
+      - mancala-net
+    expose:
+      - "9090"
+
+  backend:
+    image: hashicorp/http-echo
+    container_name: mancala-backend-test
+    command: ["-text=backend-ok", "-listen=:8000"]
+    ports:
+      - "8000:8000"
+    depends_on:
+      - motor
+    networks:
+      - mancala-net
+
+  frontend:
+    image: nginx:alpine
+    container_name: mancala-frontend-test
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - mancala-net
+
+networks:
+  mancala-net:
+    driver: bridge

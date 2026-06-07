@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+
+  motor:
+    build:
+      context: ../../motor
+      dockerfile: Dockerfile
+    container_name: mancala-motor
+    environment:
+      OMP_NUM_THREADS: "4"
+    networks:
+      - mancala-net
+    expose:
+      - "9090"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: mancala-backend
+    environment:
+      MOTOR_URL: "http://motor:9090"
+      OMP_NUM_THREADS: "4"
+    ports:
+      - "8000:8000"
+    depends_on:
+      motor:
+        condition: service_healthy
+    networks:
+      - mancala-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    container_name: mancala-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - mancala-net
+
+networks:
+  mancala-net:
+    driver: bridge

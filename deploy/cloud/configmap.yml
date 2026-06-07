@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: motor-config
+  namespace: default
+data:
+  OMP_NUM_THREADS: "4"
+  DEFAULT_DEPTH: "8"
+  MOTOR_URL: "http://motor-svc:9090"
