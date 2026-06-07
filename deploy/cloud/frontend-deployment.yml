@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: docker.io/USUARIO-DOCKERHUB/mancala-frontend:1.0.0
+          image: nginx:alpine
           ports:
             - containerPort: 80
           livenessProbe:

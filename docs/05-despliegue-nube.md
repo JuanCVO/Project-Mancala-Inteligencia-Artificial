@@ -78,7 +78,7 @@ No se usa `latest` en producción para garantizar reproducibilidad.
 
 ## Evidencia del despliegue
 
-```
-# Captura pendiente — se agrega cuando el clúster GKE esté activo
-# kubectl get pods,svc,deploy
-```
+![Pods corriendo en GKE](img/kubectl-pods-nube.png)
+
+IP externa del frontend: `136.113.20.131`
+IP externa del backend: `34.121.142.129`
