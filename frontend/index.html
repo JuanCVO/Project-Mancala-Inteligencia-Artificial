@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mancala - Motor IA</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Mancala Game Engine</h1>
+            <p>Calculate optimal moves using Alpha-Beta or MCTS algorithms</p>
+        </header>
+
+        <main>
+            <div class="content-wrapper">
+                <!-- Control Panel -->
+                <section class="control-panel">
+                    <h2>Board Configuration</h2>
+
+                    <div class="form-group">
+                        <label for="boardInput">Board State (14 integers):</label>
+                        <textarea
+                            id="boardInput"
+                            placeholder="e.g., [4,4,4,4,4,4,0,4,4,4,4,4,4,0]"
+                            rows="3"
+                        >[4,4,4,4,4,4,0,4,4,4,4,4,4,0]</textarea>
+                        <small>Format: 14 comma-separated integers in square brackets</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sideSelect">Player Side:</label>
+                            <select id="sideSelect">
+                                <option value="0">Player 0</option>
+                                <option value="1">Player 1</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="algoSelect">Algorithm:</label>
+                            <select id="algoSelect">
+                                <option value="alphabeta">Alpha-Beta</option>
+                                <option value="mcts">MCTS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Alpha-Beta Parameters -->
+                    <div id="alphabetaParams" class="params-group">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="depthInput">Search Depth:</label>
+                                <input
+                                    type="number"
+                                    id="depthInput"
+                                    min="1"
+                                    max="20"
+                                    value="6"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="threadsInput">Threads:</label>
+                                <input
+                                    type="number"
+                                    id="threadsInput"
+                                    min="1"
+                                    max="64"
+                                    value="1"
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MCTS Parameters -->
+                    <div id="mctsParams" class="params-group hidden">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="simulationsInput">Simulations:</label>
+                                <input
+                                    type="number"
+                                    id="simulationsInput"
+                                    min="100"
+                                    max="1000000"
+                                    value="10000"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="threadsInputMcts">Threads:</label>
+                                <input
+                                    type="number"
+                                    id="threadsInputMcts"
+                                    min="1"
+                                    max="64"
+                                    value="1"
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="calculateButton" class="btn-primary">
+                        🔍 Calculate Move
+                    </button>
+                </section>
+
+                <!-- Results Panel -->
+                <section class="results-panel">
+                    <h2>Results</h2>
+
+                    <div id="loadingSpinner" class="spinner hidden"></div>
+
+                    <div id="resultsContent" class="hidden">
+                        <div class="result-item">
+                            <span class="result-label">Best Move:</span>
+                            <span id="moveResult" class="result-value">—</span>
+                        </div>
+
+                        <div class="result-item">
+                            <span class="result-label">Evaluation:</span>
+                            <span id="evaluationResult" class="result-value">—</span>
+                        </div>
+
+                        <div class="result-item">
+                            <span class="result-label">Elapsed Time:</span>
+                            <span id="elapsedResult" class="result-value">—</span>
+                        </div>
+
+                        <div class="result-item">
+                            <span class="result-label">Threads Used:</span>
+                            <span id="threadsResult" class="result-value">—</span>
+                        </div>
+
+                        <div class="stats-section">
+                            <h3>Statistics</h3>
+                            <div id="statsContent" class="stats-content"></div>
+                        </div>
+                    </div>
+
+                    <div id="errorMessage" class="error-message hidden"></div>
+                    <div id="successMessage" class="success-message hidden"></div>
+                </section>
+            </div>
+
+            <!-- Status Panel -->
+            <section class="status-panel">
+                <h3>Service Status</h3>
+                <div class="status-item">
+                    <span>Backend Health:</span>
+                    <span id="backendStatus" class="status-indicator pending">⏳</span>
+                </div>
+                <div class="status-item">
+                    <span>Motor Ready:</span>
+                    <span id="motorStatus" class="status-indicator pending">⏳</span>
+                </div>
+                <button id="refreshStatusButton" class="btn-secondary">Refresh Status</button>
+            </section>
+        </main>
+
+        <footer>
+            <p>Mancala AI Engine | Powered by FastAPI + C++ Motor</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

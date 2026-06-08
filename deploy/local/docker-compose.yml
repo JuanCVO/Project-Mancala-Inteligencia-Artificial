@@ -12,9 +12,9 @@ services:
     networks:
       - mancala-net
     expose:
-      - "9090"
+      - "8001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/healthz"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -25,7 +25,7 @@ services:
       dockerfile: Dockerfile
     container_name: mancala-backend
     environment:
-      MOTOR_URL: "http://motor:9090"
+      MOTOR_URL: "http://motor:8001"
       OMP_NUM_THREADS: "4"
     ports:
       - "8000:8000"
