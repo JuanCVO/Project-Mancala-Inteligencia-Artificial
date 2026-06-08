@@ -16,23 +16,23 @@ spec:
     spec:
       containers:
         - name: motor
-          image: hashicorp/http-echo
+          image: USUARIO-DOCKERHUB/mancala-motor:1.0.0
           args: ["-text=motor-ok", "-listen=:9090"]
           ports:
-            - containerPort: 9090
+            - containerPort: 8001
           envFrom:
             - configMapRef:
                 name: motor-config
           livenessProbe:
             httpGet:
-              path: /
-              port: 9090
+              path: /healthz
+              port: 8001
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
-              port: 9090
+              path: /healthz
+              port: 8001
             initialDelaySeconds: 3
             periodSeconds: 5
           resources:

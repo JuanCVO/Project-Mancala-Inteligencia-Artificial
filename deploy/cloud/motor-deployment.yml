@@ -25,14 +25,14 @@ spec:
                 name: motor-config
           livenessProbe:
             httpGet:
-              path: /
-              port: 9090
+              path: /healthz
+              port: 8001
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
-              port: 9090
+              path: /healthz
+              port: 8001
             initialDelaySeconds: 3
             periodSeconds: 5
           resources:

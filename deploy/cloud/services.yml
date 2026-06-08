@@ -6,8 +6,8 @@ spec:
   selector:
     app: motor
   ports:
-    - port: 9090
-      targetPort: 9090
+    - port: 8001
+      targetPort: 8001
   type: ClusterIP
 ---
 apiVersion: v1

@@ -6,4 +6,4 @@ metadata:
 data:
   OMP_NUM_THREADS: "4"
   DEFAULT_DEPTH: "8"
-  MOTOR_URL: "http://motor-svc:9090"
+  MOTOR_URL: "http://motor-svc:8001"
