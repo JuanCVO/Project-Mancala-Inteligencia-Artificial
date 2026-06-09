@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: nginx:alpine
+          image: alejo0213/mancala-frontend:1.0.0
           ports:
             - containerPort: 80
           livenessProbe:

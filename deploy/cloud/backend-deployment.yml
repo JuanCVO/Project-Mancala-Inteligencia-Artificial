@@ -16,8 +16,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: hashicorp/http-echo
-          args: ["-text=backend-ok", "-listen=:8000"]
+          image: alejo0213/mancala-backend:1.0.0
           ports:
             - containerPort: 8000
           envFrom:
@@ -25,13 +24,13 @@ spec:
                 name: motor-config
           livenessProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
+              path: /readyz
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 5

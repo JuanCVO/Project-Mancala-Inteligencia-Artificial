@@ -5,7 +5,7 @@
 # No build step needed for vanilla frontend
 
 # Stage 2: Serve with nginx
-FROM nginx:latest-alpine
+FROM nginx:alpine
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf

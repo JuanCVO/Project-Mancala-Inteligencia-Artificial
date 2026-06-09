@@ -16,8 +16,7 @@ spec:
     spec:
       containers:
         - name: motor
-          image: USUARIO-DOCKERHUB/mancala-motor:1.0.0
-          args: ["-text=motor-ok", "-listen=:9090"]
+          image: alejo0213/mancala-motor:1.0.0
           ports:
             - containerPort: 8001
           envFrom:
@@ -27,13 +26,13 @@ spec:
             httpGet:
               path: /healthz
               port: 8001
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /healthz
               port: 8001
-            initialDelaySeconds: 3
+            initialDelaySeconds: 5
             periodSeconds: 5
           resources:
             requests:
