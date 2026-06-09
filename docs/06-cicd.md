@@ -67,7 +67,9 @@ Los puertos ya están alineados: motor en **8001** con probes `/healthz`, backen
 
 ### 3.4 sonar.yml — Análisis estático
 
-Usa la action oficial `sonarsource/sonarqube-scan-action@v2` (declarada en YAML, no plugin del marketplace). El alcance (`sonar.sources`) abarca `motor` (C++), `backend` (Python) y `frontend` (JS/CSS); las carpetas de test se declaran en `sonar.tests`. Para el análisis C++ se genera `compile_commands.json` con `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`. El quality gate se aplica con `sonar.qualitygate.wait=true`.
+Usa la action oficial `sonarsource/sonarqube-scan-action@v2` (declarada en YAML, no plugin del marketplace). Analiza el **backend** (Python) y el **frontend** (JS/CSS/HTML), más los Dockerfiles; las pruebas se declaran en `sonar.tests`.
+
+**Decisión documentada:** el **motor C++ no se analiza con Sonar**, sino que se valida en el workflow `motor-ci` (compilación + `ctest`, incluido el invariante Alfa-Beta ≡ Minimax). El analizador C/C++ de Sonar requiere ejecutar el compilador *dentro del contenedor del scanner* (que no lo incluye), por lo que configurarlo excede el alcance del proyecto. El resultado del **quality gate** se consulta en el panel de SonarCloud (ver §6).
 
 ## 4. Secrets y configuración
 
