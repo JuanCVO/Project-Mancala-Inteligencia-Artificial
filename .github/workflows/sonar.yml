@@ -1,0 +1,22 @@
+name: sonar
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Instalar dependencias C++
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ libomp-dev
+      - name: Generar compile_commands.json
+        run: cmake -S motor -B motor/build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Analisis SonarQube/SonarCloud
+        uses: sonarsource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

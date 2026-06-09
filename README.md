@@ -1,77 +1,67 @@
 # Project-Mancala-Inteligencia-Artificial
-Este proyecto integra los dos hilos conductores del curso: paralelizacion con instrumentación sobre un problema de computo intensivo y despliegue distribuido de la solucion sobre Kubernetes en la nube.
 
----
+Proyecto final que integra **paralelización con instrumentación** (motores de IA
+para Kalah(6,4): Alfa-Beta y MCTS con OpenMP) y **despliegue distribuido** sobre
+Kubernetes (local y nube), con CI/CD y análisis de rendimiento.
 
-## Probar el motor de juego (Alpha-Beta) con Docker
+## Integrantes
 
-### Requisitos
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y corriendo.
+| Nombre | Código | Rol |
+|---|---|---|
+| Juan Camilo Vélez Ospina | 2510206 | Motor C++ Alfa-Beta + `board.h` |
+| Andrés Felipe Salcedo Buitrago | 2359304 | Motor C++ MCTS + benchmarks |
+| Juan David Ascencio | 2359660 | Backend (FastAPI) + Frontend |
+| Juan Manuel Pérez Cruz | 2266033 | CI/CD + análisis comparativo + documentación |
+| Juan Alejandro Urrego | 2569068 | Despliegue local y nube (Kubernetes) |
 
-### 1. Construir la imagen
+## Estructura
+
+```
+.
+├── motor/        # Motores C++ (Alfa-Beta + MCTS), tests, benchmark y Dockerfile
+├── backend/      # API FastAPI (Python) que envuelve el motor + tests pytest
+├── frontend/     # Interfaz web estática (HTML/CSS/JS) servida con nginx
+├── deploy/       # docker-compose y manifiestos Kubernetes (local y nube)
+├── docs/         # Documentación (8 secciones)
+└── .github/      # Workflows de CI/CD (motor-ci, backend-ci, docker-publish, sonar)
+```
+
+## Build local
+
+### Solo el motor
 
 ```bash
-docker build -t mancala-motor ./motor
+cd motor
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+cd build && ctest --output-on-failure
 ```
 
-### 2. Correr el servidor
+Ver [motor/README.md](motor/README.md) para probarlo vía Docker y el contrato del
+endpoint `/move`.
+
+### Levantar el stack completo (motor + backend + frontend)
 
 ```bash
-docker run --rm -p 8001:8001 --name mancala mancala-motor
+cd deploy/local
+docker compose up --build
 ```
 
-El servidor queda escuchando en `http://localhost:8001`.
+Frontend en `http://localhost:8080`, backend en `http://localhost:8000`
+(motor interno en `8001`).
 
-### 3. Probar el endpoint
+## CI/CD
 
-En otra terminal, con Python:
+Cuatro workflows en `.github/workflows/` se ejecutan sobre `main`/`master`:
 
-```bash
-python -c "
-import urllib.request, json
-data = json.dumps({'board':[4,4,4,4,4,4,0,4,4,4,4,4,4,0],'side':0,'depth':6}).encode()
-req = urllib.request.Request('http://localhost:8001/move', data=data, headers={'Content-Type':'application/json'})
-resp = urllib.request.urlopen(req, timeout=30)
-print(json.dumps(json.loads(resp.read().decode()), indent=2))
-"
-```
+- `motor-ci.yml` — compila el motor y corre `ctest` (board + alphabeta + mcts).
+- `backend-ci.yml` — instala dependencias y corre `pytest` del backend.
+- `docker-publish.yml` — build y push de imágenes con tag inmutable (SHA del commit).
+- `sonar.yml` — análisis estático con SonarQube/SonarCloud + quality gate.
 
-Respuesta esperada:
-```json
-{
-  "move": 1,
-  "evaluation": -1.0,
-  "elapsed_ms": 1,
-  "stats": {
-    "algo": "alphabeta",
-    "nodes": 43039,
-    "prunes": 8301
-  },
-  "threads_used": 1
-}
-```
+Detalle en [docs/06-cicd.md](docs/06-cicd.md).
 
-### 4. Otros endpoints
+## Documentación
 
-| Endpoint | Método | Descripción |
-|----------|--------|-------------|
-| `/move` | POST | Calcula el mejor movimiento |
-| `/healthz` | GET | Liveness probe |
-| `/readyz` | GET | Readiness probe |
-| `/metrics` | GET | Métricas acumuladas |
-
-### 5. Parámetros del endpoint `/move`
-
-| Campo | Tipo | Default | Descripción |
-|-------|------|---------|-------------|
-| `board` | array[14] | requerido | Estado del tablero (14 enteros) |
-| `side` | int | 0 | Jugador a mover (0 o 1) |
-| `depth` | int | 8 | Profundidad de búsqueda |
-| `threads` | int | 1 | Hilos OpenMP para la búsqueda paralela |
-| `algo` | string | `"alphabeta"` | Algoritmo: `"alphabeta"` o `"mcts"` |
-
-### 6. Detener el servidor
-
-```bash
-docker stop mancala
-```
+Índice completo en [docs/](docs/README.md) — 8 secciones (arquitectura, motor,
+paralelización, despliegue local/nube, CI/CD, análisis comparativo, conclusiones).

@@ -1,0 +1,19 @@
+name: motor-ci
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar dependencias
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ libomp-dev
+      - name: Configurar (CMake)
+        run: cmake -S motor -B motor/build -DCMAKE_BUILD_TYPE=Release
+      - name: Compilar
+        run: cmake --build motor/build --parallel
+      - name: Pruebas unitarias
+        run: ctest --test-dir motor/build --output-on-failure
