@@ -49,27 +49,19 @@ Configura Python 3.11, instala `requirements.txt` y ejecuta `pytest` sobre `back
 
 ### 3.3 docker-publish.yml — Build y push de imágenes
 
-Construye y publica en GHCR tres imágenes mediante una `matrix`:
+Construye y publica en **Docker Hub** tres imágenes mediante una `matrix`:
 
-| Imagen | Contexto |
-|--------|----------|
-| `mancala-motor` | `./motor` |
-| `mancala-backend` | `./backend` |
-| `mancala-frontend` | `./frontend` |
+| Imagen publicada | Contexto | Tags |
+|------------------|----------|------|
+| `alejo0213/mancala-motor` | `./motor` | `1.0.0`, `<sha>` |
+| `alejo0213/mancala-backend` | `./backend` | `1.0.0`, `<sha>` |
+| `alejo0213/mancala-frontend` | `./frontend` | `1.0.0`, `<sha>` |
 
-Los tags son inmutables: se usa el SHA del commit (`${{ github.sha }}`), nunca `latest`.
+**Registro: Docker Hub (`alejo0213/*`).** Se eligió Docker Hub para que las imágenes que publica el CI sean exactamente las que despliega Kubernetes: los manifiestos de `deploy/` ya referencian `alejo0213/mancala-*:1.0.0`. El workflow hace login con los secrets `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN` (token de acceso de la cuenta `alejo0213`).
 
-**⚠️ Decisión pendiente con Alejandro — registro/tag.** Hoy hay un desalineamiento:
-
-| | Registro | Imagen | Tag |
-|---|---|---|---|
-| Este CI (`docker-publish.yml`) | GHCR | `ghcr.io/JuanCVO/mancala-*` | `<sha>` (inmutable por commit) |
-| Manifiestos `deploy/` (Alejandro) | Docker Hub | `alejo0213/mancala-*` | `1.0.0` |
-
-Ambos cumplen "no usar `latest`", pero apuntan a sitios distintos. Hay que acordar **uno solo** para que lo que publica el CI sea exactamente lo que despliega Kubernetes. Dos opciones:
-
-- **A) Todo en GHCR + SHA:** Alejandro cambia los manifiestos a `ghcr.io/JuanCVO/mancala-*:<sha>` (máxima trazabilidad commit→imagen→pod).
-- **B) Todo en Docker Hub:** este workflow publica a `alejo0213/mancala-*` (requiere secrets `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` y un esquema de tag inmutable, p. ej. `1.0.0`/`<sha>`).
+Cada imagen se publica con **dos tags inmutables** (nunca `latest`):
+- **`1.0.0`** — el que consumen los manifiestos (despliegue = imagen del CI).
+- **`<sha>`** (`${{ github.sha }}`) — trazabilidad commit→imagen→pod.
 
 Los puertos ya están alineados: motor en **8001** con probes `/healthz`, backend en 8000 (`/healthz`+`/readyz`), `MOTOR_URL=http://motor-svc:8001`.
 

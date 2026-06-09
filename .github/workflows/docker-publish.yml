@@ -7,7 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     strategy:
       matrix:
         include:
@@ -19,15 +18,16 @@ jobs:
             context: ./frontend
     steps:
       - uses: actions/checkout@v4
-      - name: Login a GHCR
+      - name: Login a Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build y push (tag inmutable por SHA)
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build y push (Docker Hub, tags 1.0.0 + SHA)
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ github.sha }}
+          tags: |
+            alejo0213/${{ matrix.image }}:1.0.0
+            alejo0213/${{ matrix.image }}:${{ github.sha }}
